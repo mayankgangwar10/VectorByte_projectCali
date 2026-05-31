@@ -13,25 +13,24 @@ editor: visual
 
 Note for team: this document is currently populated with the example report provided by Vectorbyte!
 
-```{r, echo=FALSE}
-# Load libraries we need
-library(tidyverse)
-library(kableExtra)
-```
 
-```{r, include = F, message = F,}
+```{r, include = F, message = F}
 # We can hide our set up code chunk using the "echo = FALSE" option. 
 # We can make sure no messages pop up by adding "message = FALSE".
 # Include = FALSE doesn't show the code OR the output
+
+# Load libraries we need
+library(tidyverse)
+library(kableExtra)
 
 # Get the API ready to access data
 source("VecDyn_Dataset_Access.R")
 
 # Get data sets
-list_of_dataframes <- searchDatasets("Suffolk Virginia mosquito control")
+list_of_dataframes <- searchDatasets("Northwest Mosquito And Vector Control District")
 ```
 
-```{r, echo=FALSE, eval=DL}
+```{r, echo=FALSE}
 ######## Data Cleaning ##########
 
 # Collapse the datasets into one dataset
@@ -56,7 +55,10 @@ mosqDFcomb <- mosqDF %>%
 # Add year and month variables
 mosqDFcomb$month <- month(mosqDFcomb$sample_start_date)
 mosqDFcomb$year <- year(mosqDFcomb$sample_start_date)
+
+#write.csv(mosqDF, file = "California NW Data.csv")
 ```
+
 
 ```{r}
 
