@@ -43,17 +43,41 @@ for (i in 1:length(list_of_dataframes)) {
 # Make sure date is a date variable
 mosqDF$sample_start_date <- ymd(mosqDF$sample_start_date)
 
+#Removing zeros
+mosqDF <- mosqDF %>% filter(sample_value != 0)
+
 # Combine observations from the same date
 mosqDFcomb <- mosqDF %>% 
   group_by(sample_start_date) %>%
+  summarize(totalMos = sum(sample_value))
+
+speciesmosqDFcomb <- mosqDF %>% 
+  group_by(sample_start_date, species) %>%
   summarize(totalMos = sum(sample_value))
 
 # Add year and month variables
 mosqDFcomb$month <- month(mosqDFcomb$sample_start_date)
 mosqDFcomb$year <- year(mosqDFcomb$sample_start_date)
 
+speciesmosqDFcomb$month <- month(speciesmosqDFcomb$sample_start_date)
+speciesmosqDFcomb$year <- year(speciesmosqDFcomb$sample_start_date)
+
+mosqDF$month <- month(mosqDF$sample_start_date)
+mosqDF$year <- year(mosqDF$sample_start_date)
+
+mosqDF <- mosqDF %>% filter(year != 2013)
+mosqDFcomb <- mosqDFcomb %>% filter(year != 2013)
+
+
 #write.csv(mosqDF, file = "California NW Data.csv")
 ```
+
+```{r, echo = FALSE}
+#Create drought variable
+mosqDF <- mosqDF %>% mutate(drought = if_else(year %in% c(2014, 2015, 2016, 2017), 1, 0))
+mosqDFcomb <- mosqDFcomb %>% mutate(drought = if_else(year %in% c(2014, 2015, 2016, 2017), 1, 0))
+```
+
 
 
 ```{r, echo = FALSE}
@@ -64,8 +88,7 @@ summaryDat <- data.frame(year = numeric(0),
                          mean = numeric(0),
                          median = numeric(0),
                          min = numeric(0), 
-                         max = numeric(0),
-                         outliers = numeric(0))
+                         max = numeric(0))
 
 mosqYears <- unique(mosqDFcomb$year)
 
@@ -78,16 +101,22 @@ for (i in 1:length(mosqYears)) {
   mean <- mean(df$totalMos, na.omit = T)
   median <- median(df$totalMos, na.omit = T)
   min <- min(df$totalMos, na.omit = T)
-  max <- max(df$totalMos, na.omit = T)
-  outliers <- length(boxplot.stats(mosqDFcomb$totalMos)$out) # Note there are other ways to find outliers
+  max <- max(df$totalMos, na.omit = T) # Note there are other ways to find outliers
   
   
-  sumDF <- c(year, n, mean, median, min, max, outliers)
+  sumDF <- c(year, n, mean, median, min, max)
   
   summaryDat[i, ] <- sumDF
 
 }
 ```
+
+```{r}
+months <- mosqDFcomb %>% group_by(year,month) %>% summarise(mean = mean(totalMos), median = median(totalMos)) %>% mutate(date = as.Date(paste(year, month, "01", sep = "-")))
+
+speciesmonth <- speciesmosqDFcomb %>% group_by(species,year,month) %>% summarise(mean = mean(totalMos), median = median(totalMos)) %>% mutate(date = as.Date(paste(year, month, "01", sep = "-")))
+```
+
 
 **This table is a very simple version of what is possible. If you want, research the kableExtra package and see if you can add some simple customizations to this table to make it look nicer.**
 
@@ -103,6 +132,8 @@ In this section, we will visualized the raw and summarized collection data. In t
 ```{r, echo = F}
 ggplot(mosqDFcomb, aes(x = sample_start_date, y = totalMos))+
          geom_point()
+
+ggplot(months, aes(x=month, y=median)) + geom_point() + geom_smooth()
 ```
 
 Using summary statistics can help us visualize big picture patterns better. We can use the mean and median to see how they differ.
